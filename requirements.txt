@@ -1,0 +1,6 @@
+flask
+pymongo
+elasticsearch
+mongo-connector
+elastic2-doc-manager
+tqdm

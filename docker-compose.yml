@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  web:
+    container_name: my_app
+    build: .
+    command: python -u app.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/todo
+    links:
+      - db
+      - elasticsearch
+    networks:
+      - my_network
+  db:
+    container_name: mongodb
+    hostname: mongo
+    image: mongo:3.6
+    restart: always
+    ports:
+      - "27017"
+    volumes:
+      - ./data:/data/db
+    links:
+      - elasticsearch
+    networks:
+      - my_network
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.0
+    environment:
+    - node.name=es01
+    - discovery.type=single-node
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+    -  esdata:/usr/share/elasticsearch/data
+    ports:
+    - "9200:9200"
+    networks:
+      - my_network
+
+volumes:
+  esdata:
+    driver: local
+networks:
+  my_network:
+    driver: bridge

@@ -1,0 +1,17 @@
+"version" is just describing which type of Docker-Compose file format you are going to use, there are several versions
+you can choose.In this, I am currently using Version 3.
+
+"Services" are just a way of declaring or differentiating the various containers which are made inside the service with
+a unique name.
+
+"restart" allows us to define frequency when to restart the build process in order to incorporate the change in environment
+file or docker file.
+
+"build" command is used to declare our source directory where docker needs to take files and run the system
+
+"ports" command is used for mapping the ports for host and container.
+
+"volumes" are mainly used for storing data which is generated inside the docker container on to the host machine so that
+we can access it even after the container gets destroyed.
+
+"links" create the bridge between containers so they can communicate with each other.
