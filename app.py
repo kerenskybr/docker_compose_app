@@ -6,7 +6,6 @@ import pymongo
 from bson import json_util, ObjectId
 import json
 import tqdm
-
 # 53f4q253642gf55437v54utjujthy vhj563f426536f422536f4g
 # elastic_deploy
 
@@ -21,14 +20,18 @@ Password
 
 app = Flask(__name__)
 
+
 #es = Elasticsearch(['https://localhost:9200/'], timeout=300)
+'''
 es = Elasticsearch(
-    ['localhost'],
+    ['elasticsearch'],
     http_auth=('elastic', 'aUt85vdmonTV6DxJm7u2H9od'),
     scheme="https",
     port=9200,
+    use_ssl=False,
+    verify_certs=False,timeout=30, max_retries=10, retry_on_timeout=True
 )
-
+'''
 # client = MongoClient(os.environ['DB_PORT_27017_TCP_ADDR'],27017)
 # client = MongoClient()
 #client = MongoClient('mongodb://mongodb:27017/')
@@ -37,12 +40,16 @@ mgclient = MongoClient('mongodb://mongodb:27017/')
 db = mgclient['light']
 col = db['task']
 
+es = Elasticsearch(
+    ['elasticsearch'],
+    http_auth=('elastic', 'aUt85vdmonTV6DxJm7u2H9od')
+)
 
 new_posts = [{"author": "Mike",
               "text": "Another post!",
-             "tags": ["bulk", "insert"],
+              "tags": ["bulk", "insert"],
               "date": "datetime.datetime(2009, 11, 12, 11, 14)"},
-           {"author": "Eliot",
+            {"author": "Eliot",
                "title": "MongoDB is fun",
                "text": "and pretty easy too!",
                "date": "datetime.datetime(2009, 11, 10, 10, 45)"}]
@@ -50,11 +57,11 @@ post_id = col.insert_many(new_posts)
 
 @app.route('/', methods=['GET'])
 def todo():
-    _items = db.tododb.find()
+    _items = db.col.find()
 
     print("DB GET", _items)
     # _items = es.search(index="tododb", body=_items)
-    # items = [item for item in _items]
+    items = [item for item in _items]
 
     # Pull from mongo and dump into ES using bulk API
     actions = []
@@ -76,17 +83,11 @@ def todo():
         }
     }
 
-    es.indices.create(index='light', body=request_body, ignore=400)
-    res = es.bulk(index='light', body=actions, refresh=True)
-    '''
-    result = db.find()
-    names = []
-    for obj in db.find():
-        name = obj['name']
-        names.append(name)
-        print(names)
-    '''
-    return render_template('todo.html')
+    es.indices.create(index='machine learning', body=request_body, ignore=400)
+    res = es.bulk(index='machine learning', body=actions, refresh=True)
+
+
+    return render_template('todo.html', items=items)
 
 
 @app.route('/new', methods=['POST'])
@@ -95,43 +96,15 @@ def new():
         'name': request.form['name'],
         'description': request.form['description']
     }
-    db.tododb.insert_one(item_doc)
 
-    # Creating mongoddb indexes
-    # db.tododb.create_index([('text', pymongo.ASCENDING)])
-
-    # page_sanitized = json.loads(json_util.dumps(item_doc))
-    # es.indices.create(index='text', body=page_sanitized)
-
-    # res = es.bulk(index='example_index', body=page_sanitized)
-    # page_sanitized = json.loads(json_util.dumps(item_doc))
-
-    # res = es.index(index="text", id=1, body=page_sanitized)
-    # print("ELASTIC RESULT", res['result'])
-
-    '''
-    #Creating mongoddb indexes
-    db.tododb.createIndex({'name':'text', 'content':'text'})
-
-    print("ITEM DOC", item_doc)
-
-    page_sanitized = json.loads(json_util.dumps(item_doc))
-
-    res = es.index(index="name", id=1, body=page_sanitized)
-    print("ELASTIC RESULT", res['result'])
-
-    res = es.search(index="name", body={"query": {"match_all": {}}})
-    print("Got %d Hits:" % res['hits']['total']['value'])
-    for hit in res['hits']['hits']:
-        print("%(timestamp)s %(author)s: %(text)s" % hit["_source"])
-    '''
+    db.col.insert_one(item_doc)
 
     return redirect(url_for('todo'))
 
 
 @app.route('/query')
 def Query():
-    a = es.search(index='light', body={
+    a = es.search(index='machine learning', body={
         'query': {
             'match': {
                 'name': 'test',
@@ -169,15 +142,3 @@ GET /inspections/_search
 }
 '''
 
-'''
-  elasticsearch:
-    hostname: elasticsearch
-    image: elasticsearch:6.8.9
-    ports:
-      - "9200:9200"
-      - "9300:9300"  
-
-networks:
-  somenetwork:
-    driver: bridge      
-'''

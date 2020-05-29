@@ -1,6 +1,7 @@
 flask
 pymongo
 elasticsearch
+kibana
 mongo-connector
 elastic2-doc-manager
 tqdm
