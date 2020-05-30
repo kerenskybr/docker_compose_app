@@ -8,34 +8,9 @@ import json
 import tqdm
 # 53f4q253642gf55437v54utjujthy vhj563f426536f422536f4g
 # elastic_deploy
-
-'''
-Username
-    elastic
-Password
-    aUt85vdmonTV6DxJm7u2H9od
-'''
-
-# es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
-
+import time
 app = Flask(__name__)
 
-
-#es = Elasticsearch(['https://localhost:9200/'], timeout=300)
-'''
-es = Elasticsearch(
-    ['elasticsearch'],
-    http_auth=('elastic', 'aUt85vdmonTV6DxJm7u2H9od'),
-    scheme="https",
-    port=9200,
-    use_ssl=False,
-    verify_certs=False,timeout=30, max_retries=10, retry_on_timeout=True
-)
-'''
-# client = MongoClient(os.environ['DB_PORT_27017_TCP_ADDR'],27017)
-# client = MongoClient()
-#client = MongoClient('mongodb://mongodb:27017/')
-#db = client.tododb
 mgclient = MongoClient('mongodb://mongodb:27017/')
 db = mgclient['light']
 col = db['task']
@@ -43,34 +18,28 @@ col = db['task']
 es = Elasticsearch(
     ['elasticsearch'],
     http_auth=('elastic', 'aUt85vdmonTV6DxJm7u2H9od')
-)
+    )
 
-new_posts = [{"author": "Mike",
-              "text": "Another post!",
-              "tags": ["bulk", "insert"],
-              "date": "datetime.datetime(2009, 11, 12, 11, 14)"},
-            {"author": "Eliot",
-               "title": "MongoDB is fun",
-               "text": "and pretty easy too!",
-               "date": "datetime.datetime(2009, 11, 10, 10, 45)"}]
-post_id = col.insert_many(new_posts)
+dummy_data = {
+    'name': 'dummy_data',
+    'description': 'dummy_data'
+}
+
+col.insert_one(dummy_data)
 
 @app.route('/', methods=['GET'])
 def todo():
-    _items = db.col.find()
-
-    print("DB GET", _items)
-    # _items = es.search(index="tododb", body=_items)
-    items = [item for item in _items]
 
     # Pull from mongo and dump into ES using bulk API
+    # Here, name will become an index in es
+    #ES stuff
     actions = []
     for data in col.find():
         data.pop('_id')
         action = {
             "index": {
-                "_index": 'light',
-                "_type": 'task',
+                "_index": 'description',
+                "_type": 'text',
             }
         }
         actions.append(action)
@@ -83,9 +52,11 @@ def todo():
         }
     }
 
-    es.indices.create(index='machine learning', body=request_body, ignore=400)
-    res = es.bulk(index='machine learning', body=actions, refresh=True)
+    es.indices.create(index='light', body=request_body, ignore=400)
+    res = es.bulk(index='light', body=actions, refresh=True)
 
+    _items = col.find()
+    items = [item for item in _items]
 
     return render_template('todo.html', items=items)
 
@@ -97,14 +68,14 @@ def new():
         'description': request.form['description']
     }
 
-    db.col.insert_one(item_doc)
+    col.insert_one(item_doc)
 
     return redirect(url_for('todo'))
 
 
 @app.route('/query')
-def Query():
-    a = es.search(index='machine learning', body={
+def query():
+    a = es.search(index='light', body={
         'query': {
             'match': {
                 'name': 'test',
