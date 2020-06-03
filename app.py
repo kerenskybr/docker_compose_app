@@ -3,12 +3,10 @@ from flask import Flask, redirect, url_for, request, render_template, jsonify
 from pymongo import MongoClient
 from elasticsearch import Elasticsearch
 import pymongo
-from bson import json_util, ObjectId
-import json
-import tqdm
+
 # 53f4q253642gf55437v54utjujthy vhj563f426536f422536f4g
 # elastic_deploy
-import time
+
 app = Flask(__name__)
 
 mgclient = MongoClient('mongodb://mongodb:27017/')
